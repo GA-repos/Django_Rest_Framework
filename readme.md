@@ -95,9 +95,9 @@ fetch("/artists", {
 Using Django's built-in `JsonResponse`, we can send dictionaries or lists as
 JSON objects in Django without installing any libraries.
 
-Let's open
+Let's open a sample app called 
 [`dogs`](https://git.generalassemb.ly/Flex-322/django_rest-framework_starter)
-and checkout a new branch to test it out!
+and to test it out!
 
 Here is what that looks like:
 
