@@ -1,4 +1,3 @@
-## SEIR323 August 24, 2021 
 
 [![General Assembly Logo](https://camo.githubusercontent.com/1a91b05b8f4d44b5bbfb83abac2b0996d8e26c92/687474703a2f2f692e696d6775722e636f6d2f6b6538555354712e706e67)](https://generalassemb.ly/education/web-development-immersive)
 
@@ -97,7 +96,7 @@ Using Django's built-in `JsonResponse`, we can send dictionaries or lists as
 JSON objects in Django without installing any libraries.
 
 Let's open
-[`tunr`](https://git.generalassemb.ly/SEIR-1130/tunr-1)
+[`dogs`](https://git.generalassemb.ly/Flex-322/django_rest-framework_starter)
 and checkout a new branch to test it out!
 
 Here is what that looks like:
@@ -106,12 +105,11 @@ Here is what that looks like:
 # views.py
 from django.http import JsonResponse
 
-def artist_list(request):
+def owner_list(request):
     data = {
-        'name': 'Funkadelic',
-        'photo_url': 'https://media1.fdncms.com/orlando/imager/u/original/10862750/screen_shot_2018-02-16_at_1.16.25_pm.png',
-        'nationality': 'USA'
+        'owner': 'Billie H'
     }
+    
     return JsonResponse(data)
 ```
 
@@ -123,10 +121,11 @@ to a dictionary and send the data that way.
 # views.py
 from django.http import JsonResponse
 
-def artist_list(request):
-    artists = Artist.objects.all().values('name', 'nationality', 'photo_url') # only grab some attributes from our database, else we can't serialize it.
-    artists_list = list(artists) # convert our artists to a list instead of QuerySet
-    return JsonResponse(artists_list, safe=False) # safe=False is needed if the first parameter is not a dictionary.
+def owner_list(request):
+    owners = Owner.objects.all().values('name', 'dog') # only grab some attributes from our database, else we can't serialize it.
+    owners_list = list(owners) # convert our artists to a list instead of QuerySet
+    return JsonResponse(owners_list, safe=False) # safe=False is needed if the first parameter is not a dictionary.
+
 ```
 
 This method of sending JSON responses is very similar to what we did in Express.
@@ -150,10 +149,8 @@ end!
 ## Installation and Configuration (15 min / 0:40)
 
 Change into your
-[`tunr`](https://github.com/ga-wdi-exercises/tunr_updated/tree/views-solution)
-project directory and make sure you have the latest code from the views and
-templates lesson. If not, checkout the solution branch from that lesson which is
-called `views-solution`. Make sure your virtual environment is activated, and
+[`dogs`](https://git.generalassemb.ly/Flex-322/django_rest-framework_starter)
+project directory. Make sure your virtual environment is activated, and
 also make sure your database user permissions are set up properly.
 
 Before we get started, install the `djangorestframework` dependency.
@@ -168,8 +165,8 @@ use it within your project.
 ```python
 INSTALLED_APPS = [
     # ...
-    'tunr',
-    'rest_framework',
+    'dogs',
+    'rest_framework', # here
 ]
 ```
 
@@ -201,7 +198,7 @@ These URLs will be used for sign-in and sign-out pages. The framework will
 handle linking to these pages, we just need to include the URLs that have
 already been set up.
 
-In the `urls` list in `tunr_django/urls.py`, add the following to your
+In the `urls` list in `dogs_django/urls.py`, add the following to your
 `urlpatterns` list:
 
 ```python
@@ -211,7 +208,7 @@ path('api-auth', include('rest_framework.urls', namespace='rest_framework'))
 In our Templates, we can refer to each app path by it's `name`:
 
 ```py
-path('', views.artist_list, name='artist_list'),
+path('', views.owner_list, name='owner_list'),
 ```
 
 The `namespace` in the project `urls.py` allows us to refer to paths more
@@ -234,28 +231,29 @@ one model to another.
 > Read more about
 > [ Serializers in the documentation](https://www.django-rest-framework.org/api-guide/serializers/)
 
-In this case, we want all of the fields from the Artist model in our serializer,
+In this case, we want all of the fields from the Owner model in our serializer,
 so we will include all of them in our `fields` tuple.
 
-We will create a new file in our `tunr` app folder, called `serializers.py` to
+We will create a new file in our `dogs` app folder, called `serializers.py` to
 hold our serializer class.
 
 ```bash
-$ touch tunr/serializers.py
+$ touch dogs/serializers.py
 ```
 
 Import the base serializer class and model.
 
 ```py
 from rest_framework import serializers
-from .models import Artist
+from .models import Owner
 
-class ArtistSerializer(serializers.HyperlinkedModelSerializer):
-    songs = serializers.HyperlinkedRelatedField(
-        view_name='song_detail',
+class OwnerSerializer(serializers.HyperlinkedModelSerializer):
+    dog = serializers.HyperlinkedRelatedField(
+        view_name='dog_detail',
         many=True,
         read_only=True
     )
+
 ```
 
 Awesome, this is a great start. We also want to describe all the fields in
@@ -264,47 +262,48 @@ artist. We'll do this using a Meta class.
 Add a Meta class **inside** the ArtistSerializer class:
 
 ```diff
-class ArtistSerializer(serializers.HyperlinkedModelSerializer):
-    songs = serializers.HyperlinkedRelatedField(
-        view_name='song_detail',
+class OwnerSerializer(serializers.HyperlinkedModelSerializer):
+    dog = serializers.HyperlinkedRelatedField(
+        view_name='dog_detail',
         many=True,
         read_only=True
     )
+
 +   class Meta:
-+       model = Artist
-+       fields = ('id', 'photo_url', 'nationality', 'name', 'songs',)
++       model = Owner
++       fields = ('id', 'owner_url', 'name', 'dog',)
 ```
 
 Lets break down what's going on here.
 
-We are creating a `HyperlinkedRelatedField` and pointing it to the song_detail
+We are creating a `HyperlinkedRelatedField` and pointing it to the owner_detail
 view. This allows us to link one model to another using a hyperlink. So when we
 inspect the json response, we'll be able to just follow a url that takes us to
-from the current `Artist` to the related `Song`.
+from the current `Owner` to the related `Dog`.
 
-The `Meta` class within our `Artist` serializer class specifies meta data about
+The `Meta` class within our `Owner` serializer class specifies meta data about
 our serializer. In this class, we tell it the model and what fields we want to
 serialize.
 
 The `view_name` specifies the name of the view given in the `urls.py` file. If
-we look at our `tunr/urls.py` file, we already have a path like this:
+we look at our `dogs/urls.py` file, we already have a path like this:
 
 ```py
-path('songs/<int:pk>', views.song_detail, name='song_detail')
+path('dogs/<int:pk>', views.dog_detail, name='dog_detail')
 ```
 
-### You Do: Create a Serializer for Songs (10 min / 1:10)
+### You Do: Create a Serializer for Dogs (10 min / 1:10)
 
 > 5 min exercise, 5 min review
 
-In the serializers file, add a second serializer for the Song class. Again,
+In the serializers file, add a second serializer for the Dog class. Again,
 include all of the fields from the model in your API.
 
 > Bonus: Try out a different
 > [serializer](http://www.django-rest-framework.org/api-guide/serializers) to
 > relate your models!
 
-> [Solution](https://git.generalassemb.ly/flex-323/tunr-1/blob/django-rest-framework-solution/tunr/serializers.py)
+> [Solution](https://git.generalassemb.ly/Flex-322/django_rest-framework_starter/blob/solution/dogs/serializers.py)
 
 ## Break (10 min / 1:20)
 
@@ -327,34 +326,33 @@ our API and our create view. We can also use `RetrieveUpdateDestroyAPIView` to
 create show, update, and delete routes for our API.
 
 In this code example, we'll allow permissions for List and Create (CR in CRUD)
-on the ArtistList view. For ArtistDetail, we'll allow Retrieve, Update, Delete
+on the OwnerList view. For OwnerDetail, we'll allow Retrieve, Update, Delete
 (RUD in CRUD) permissions.
 
-We can get rid of all the prior code in `tunr/views.py` since we're not going to
+We can get rid of all the prior code in `dogs/views.py` since we're not going to
 be rendering any templates. We'll also have to get rid of all the urls in
-`tunr/urls.py` because they point to views that now no longer exist.
+`dogs/urls.py` because they point to views that now no longer exist.
 
 ```py
 # views.py
 
 from rest_framework import generics
-from .serializers import ArtistSerializer
-from .models import Artist
+from .serializers import OwnerSerializer
+from .models import Owner
 
-class ArtistList(generics.ListCreateAPIView):
-    queryset = Artist.objects.all()
-    serializer_class = ArtistSerializer
+class OwnerList(generics.ListCreateAPIView):
+    queryset = Owner.objects.all()
+    serializer_class = OwnerSerializer
 
-class ArtistDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Artist.objects.all()
-    serializer_class = ArtistSerializer
+class OwnerDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Owner.objects.all()
 ```
 
 ### You Do: Add Views for the Songs (10 min / 1:50)
 
 Add in the views for the songs.
 
-> [Solution](https://git.generalassemb.ly/flex-323/tunr-1/blob/django-rest-framework-solution/tunr/views.py)
+> [Solution](https://git.generalassemb.ly/Flex-322/django_rest-framework_starter/blob/solution/dogs/views.py)
 
 ## URLs (20 min / 2:10)
 
@@ -372,8 +370,8 @@ from . import views
 from rest_framework.routers import DefaultRouter
 
 urlpatterns = [
-    path('artists/', views.ArtistList.as_view(), name='artist_list'),
-    path('artists/<int:pk>', views.ArtistDetail.as_view(), name='artist_detail'),
+    path('owners/', views.OwnerList.as_view(), name='owner_list'),
+    path('owners/<int:pk>/', views.OwnerDetail.as_view(), name='owner_detail'),
 ]
 ```
 
@@ -381,16 +379,16 @@ urlpatterns = [
 
 Add in the urls for the song views.
 
-> [Solution](https://git.generalassemb.ly/flex-323/tunr-1/blob/django-rest-framework-solution/tunr/urls.py)
+> [Solution](https://git.generalassemb.ly/Flex-322/django_rest-framework_starter/blob/solution/dogs/urls.py)
 
 ## Testing! (10 min / 2:30)
 
 Now let's hit the urls we just built out and see what happens.
 
-- `http://localhost:8000/artists/`
-- `http://localhost:8000/artists/1/`
-- `http://localhost:8000/songs/`
-- `http://localhost:8000/songs/1/`
+- `http://localhost:8000/owners/`
+- `http://localhost:8000/owners/1/`
+- `http://localhost:8000/dogs/`
+- `http://localhost:8000/dogs/1/`
 
 ![](product.png)
 
@@ -404,7 +402,7 @@ Maybe we should try logging in first.....
 > If you can't login, try running `python3 manage.py createsuperuser` and follow
 > the prompts. Then, login with that user and password.
 
-Once we're logged in we should see a form on `/artists` or `/songs` that allows
+Once we're logged in we should see a form on `/owners` or `/dogs` that allows
 us to create data! woo!
 
 ## Adding Fields with URLs to Detail Views
@@ -416,41 +414,41 @@ We can add this by updating the serializers with
 [custom field mappings](https://www.django-rest-framework.org/api-guide/serializers/#customizing-field-mappings):
 
 ```diff
-class ArtistSerializer(serializers.HyperlinkedModelSerializer):
-    songs = serializers.HyperlinkedRelatedField(
-        view_name='song_detail',
+class OwnerSerializer(serializers.HyperlinkedModelSerializer):
+    dog = serializers.HyperlinkedRelatedField(
+        view_name='dog_detail',
         many=True,
-        read_only=True,
+        read_only=True
     )
 
-+    artist_url = serializers.ModelSerializer.serializer_url_field(
-+        view_name='artist_detail'
++    owner_url = serializers.ModelSerializer.serializer_url_field(
++        view_name='owner_detail'
 +    )
 
     class Meta:
-        model = Artist
+        model = Owner
 -        fields = ('id', 'photo_url', 'nationality', 'name', 'songs',)
-+        fields = ('id', 'artist_url', 'photo_url', 'nationality', 'name', 'songs',)
++        fields = ('id', 'owner_url', 'name', 'dog')
 ```
 
-But wait, how do we add a new song that is related to the artist?  Let's update the `SongSerializer` too:
+But wait, how do we add a new Dog that is related to the Owner?  Let's update the `DogSerializer` too:
 
 ```diff
-class SongSerializer(serializers.HyperlinkedModelSerializer):
-    artist = serializers.HyperlinkedRelatedField(
-        view_name='artist_detail',
+class DogSerializer(serializers.HyperlinkedModelSerializer):
+    owner = serializers.HyperlinkedRelatedField(
+        view_name='owner_detail',
         read_only=True
-    ) 
+    )
 
-+    artist_id = serializers.PrimaryKeyRelatedField(
-+        queryset=Artist.objects.all(),
-+        source='artist'
++    owner_id = serializers.PrimaryKeyRelatedField(
++        queryset=Owner.objects.all(),
++        source='owner'
 +    )
 
     class Meta:
         model = Song      
--        fields = ('id', 'artist', 'title', 'album', 'preview_url',)
-+        fields = ('id', 'artist', 'artist_id', 'title', 'album', 'preview_url')
+-        fields =('id', 'name', 'breed', 'photo_url','owner')
++        fields = ('id', 'owner_id', 'name', 'breed', 'photo_url','owner')
         
 ```
 
@@ -490,10 +488,10 @@ allows us to customize our queries. For example maybe we want to limit the
 records and only show ones that are associated with the currently logged-in
 user.
 
-## Lab: [Django Book API](https://git.generalassemb.ly/flex-323/django-api-lab)
+## Lab: [Django Book API](https://git.generalassemb.ly/Flex-322/django-api-lab)
 
 Fork and clone the
-[Django Book API](https://git.generalassemb.ly/flex-323/django-api-lab)
+[Django Book API](https://git.generalassemb.ly/Flex-322/django-api-lab)
 lab. Spend the rest of class working on the lab.
 
 ## Additional Resources
