@@ -99,6 +99,25 @@ Let's open a sample app called
 [`dogs`](https://git.generalassemb.ly/Flex-322/django_rest-framework_starter)
 and to test it out!
 
+cd into django_rest-framework_starter
+```bash
+
+cd django_rest-framework_starter
+
+# next run 
+psql -f settings.sql # include -U postgres if needed
+
+# next run
+
+pipenv shell # start our virtual shell environment
+
+# finally
+
+pipenv install # install dependancies in the Pip file
+
+
+```
+
 Here is what that looks like:
 
 ```py
