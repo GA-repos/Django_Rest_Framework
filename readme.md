@@ -365,6 +365,8 @@ class OwnerList(generics.ListCreateAPIView):
 
 class OwnerDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Owner.objects.all()
+    serializer_class = OwnerSerializer
+
 ```
 
 ### You Do: Add Views for the Songs (10 min / 1:50)
